@@ -1,7 +1,7 @@
 ###
 Response
 
-A pseudo response context that emulates a Twiml response, implementing the 
+A pseudo response context that emulates a Twiml response, implementing the
 two keywords relevant for calls: say and gather
 ###
 class Response
@@ -22,7 +22,12 @@ class Response
     @segments.push
       action: 'say'
       value: message
+    console.log "Node Saying: ", message
     return
+
+  hangup: () ->
+    @segments.push
+      action: 'hangup'
 
   ###
   Gather digits
@@ -34,7 +39,7 @@ class Response
   @param [Function] fn function for nesting actions
   ###
   gather: (opts, fn) ->
-    segment = 
+    segment =
       action: 'gather'
       opts: opts
       children: null
@@ -77,14 +82,16 @@ class CallNode
   addLink: (child, trigger) ->
     if child not in @children
       @children.push child
-    @links.push new CallNodeLink this, child, trigger
-    return
+    link = new CallNodeLink this, child, trigger
+    @links.push link
+    return link
 
   nextNode: (handler, digits, body) ->
     for link in @links
       if link.trigger handler, digits, body
         if link.to.respond?
           link.to.respond handler.response, handler
+        console.log "Current Node: ", link.to.key, @links.map (l) -> l.to.key
         return link.to
     # If no link is taken, use the default link
     if @links.length > 0
@@ -116,7 +123,7 @@ class CallNodeLink
 ###
 CallHandler
 
-An abstraction layer on top of the low level call APIs. It allows for building 
+An abstraction layer on top of the low level call APIs. It allows for building
 IVR trees in the intuitive way.
 ###
 class CallHandler
@@ -152,7 +159,7 @@ class CallHandler
 
   ###
   Handle a call step
-  
+
   @param [Object] ctx pseudo context for emulating a http req/res
   @param [Object] data the data context to operate in
   ###

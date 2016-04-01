@@ -14,7 +14,7 @@ describe 'Example Handler', ->
     done()
     return
 
-  it 'should handler a valid sequence (breathing better)', (done) ->
+  it 'should handle a valid sequence (breathing better)', (done) ->
     dialer.next null, null, (hangup, res) ->
       hangup.should.be.false
       res.segments.length.should.equal 1

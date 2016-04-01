@@ -23,6 +23,13 @@ class Dialer
         gather = segment
         break
     return gather
+  _shouldHangeUp: (segments) ->
+    if not segments
+      return false
+    for segment in segments
+      if segment.action is 'hangup'
+        return true
+    return false
 
   ###
   Step through the call sequence
@@ -40,7 +47,7 @@ class Dialer
         throw new Error 'No more next step in this sequence.'
       nodeId = gather.opts.node
     # Construct new context
-    ctx = 
+    ctx =
       nodeId: nodeId
       digits: digits
     # Emulate a call step
@@ -49,7 +56,8 @@ class Dialer
     # Check the hangup state
     gather = @_findGather ctx.response.segments
     # Fire the callback
-    fn? not gather?, ctx.response
+
+    fn? @_shouldHangeUp(ctx.response.segments) or not gather?, ctx.response
     return
 
 module.exports = Dialer

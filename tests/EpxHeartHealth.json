@@ -1,0 +1,65 @@
+{
+  "fields":{
+    "firstName":"String",
+    "lastName":"String",
+    "weight":"Number",
+    "systolic":"Number",
+    "diastolic":"Number",
+    "heartRate":"Number",
+    "hasScale":"Boolean",
+    "weightThreshold":"Number",
+    "bloodPressureThreshold":"Number",
+    "heartRateThreshold":"Number"
+  },
+  "statements":[
+    {"key":"Greeting", "description":"Say Greeting", "gather":true,
+      "say":"Welcome to ePharmix. Press any key to continue", "start":true},
+    {"key":"ConfirmName", "description":"Confirm Name", "gather":true,
+      "say":"Is your name {{firstName}}, {{lastName}}? Enter 1 for Yes. Enter 2 for No"},
+    {"key":"FindWeight", "description":"Get clients weight today", "gather":true,
+      "say":"What is your weight today? Please enter in lbs using keypad"},
+    {"key":"WeightWarning", "description":"Warn the client to watch their weight",
+    "say":"You might be at risk at your current weight level, please be careful."},
+    {"key":"FindSystolicBloodPressure", "description":"Ask for Systolic Blood Pressure",
+    "say":"What is your systolic blood pressure? Enter using your keypad", "gather":true},
+    {"key":"FindDiastolicBloodPressure", "description":"Ask for Diastolic Blood Pressure",
+    "say":"What is your diastolic blood pressure? Enter using your keypad.", "gather":true},
+    {"key":"ValidateBloodPressure", "description":"Blood Pressure was not entered correctly",
+    "say":"The values you entered are not currect. Your systolic blood pressure should be greater than your diastolic blood pressure. Please try again."},
+    {"key":"FindHeartRate", "description":"Find Clients HeartRate", "gather":true,
+    "say":"What is your heart rate? Enter using your keypad. Please take this while sitting down after relaxing for 5 minutes"},
+    {"key":"WarnAboutBP", "description":"Warn the client about possible blood pressure problems.",
+    "say":"If you feel any chest pain, blurry vision, headache, or difficulty breathing, hang up and call 911"},
+    {"key":"WarnAboutChestPain", "description":"Warn the client about chest pain",
+    "say":"If you are feeling any chest pain or breathing difficulties please call 911 immediately."},
+    {"key":"HangUpMessage", "description":"Hang up message",
+    "say":"Thank you for your responses. Please have a good day.", "hangup":true}
+  ],
+  "connections":[
+    {"from":"Greeting", "to":"ConfirmName"},
+    {"from":"ConfirmName","if":[
+      {"test":"{{hasScale}} == false", "to":"FindSystolicBloodPressure"},
+      {"test":"{{hasScale}} == true", "to":"FindWeight"}],
+      "validation":["1_OR_2"], "gather":true},
+    {"from":"FindWeight", "gatherAs":"weight", "if":[
+      {"test":"{{weight}} > {{weightThreshold}}", "to":"WeightWarning"},
+      {"test":"{{weight}} <= {{weightThreshold}}", "to":"FindSystolicBloodPressure"}],
+      "validation":["0_TO_2000"], "gather":true},
+    {"from":"WeightWarning", "to":"FindSystolicBloodPressure", "gather":false},
+    {"from":"FindSystolicBloodPressure", "to":"FindDiastolicBloodPressure",
+      "gather":true, "gatherAs":"systolic", "validation":["0_TO_300"]},
+    {"from":"FindDiastolicBloodPressure", "gather":true, "gatherAs":"diastolic",
+      "if":[
+        {"test":"{{systolic}} < {{diastolic}}", "to":"ValidateBloodPressure"},
+        {"test":"({{systolic}} >= {{diastolic}}) && (({{systolic}} > {{bloodPressureThreshold}}) || ({{diastolic}} > {{bloodPressureThreshold}}))",
+          "to":"WarnAboutBP"}],
+      "else":"FindHeartRate", "validation":["0_TO_300"]},
+    {"from":"ValidateBloodPressure", "gather":false, "to":"FindSystolicBloodPressure"},
+    {"from":"WarnAboutBP", "gather":false, "to":"FindHeartRate"},
+    {"from":"FindHeartRate", "gather":true, "gatherAs":"heartRate",
+      "if":[
+        {"test":"{{heartRate}} > {{heartRateThreshold}}", "to":"WarnAboutChestPain"}],
+      "else":"HangUpMessage", "validation":["0_TO_300"]},
+    {"from":"WarnAboutChestPain", "to":"HangUpMessage"}
+  ]
+}
