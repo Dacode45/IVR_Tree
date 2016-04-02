@@ -22,7 +22,6 @@ class Response
     @segments.push
       action: 'say'
       value: message
-    console.log "Node Saying: ", message
     return
 
   hangup: () ->
@@ -91,7 +90,6 @@ class CallNode
       if link.trigger handler, digits, body
         if link.to.respond?
           link.to.respond handler.response, handler
-        console.log "Current Node: ", link.to.key, @links.map (l) -> l.to.key
         return link.to
     # If no link is taken, use the default link
     if @links.length > 0
